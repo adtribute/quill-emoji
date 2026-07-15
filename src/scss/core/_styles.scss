@@ -278,7 +278,7 @@ button.ql-table[value="append-col"]::after { content: "COLS+"; }
 
 .ql-emojiblot {
   display: inline-block;
-  vertical-align: text-top;
+  vertical-align: -0.1em;
 }
 
 .qe-image {
@@ -286,10 +286,10 @@ button.ql-table[value="append-col"]::after { content: "COLS+"; }
 
   img {
     display: inline-block;
-    height: 1.375em;
+    height: 1em;
     width: auto;
     max-width: 3em;
     object-fit: contain;
-    vertical-align: text-bottom;
+    vertical-align: bottom;
   }
 }
