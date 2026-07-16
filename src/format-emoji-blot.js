@@ -6,7 +6,7 @@ const Embed = Quill.import('blots/embed');
 class EmojiBlot extends Embed {
   static create(value) {
     let node = super.create();
-    if (typeof value === 'object') {
+    if (value && typeof value === 'object') {
 
       EmojiBlot.buildSpan(value, node);
     } else if (typeof value === "string") {
@@ -51,9 +51,13 @@ class EmojiBlot extends Embed {
       emojiSpan.classList.add(this.imageClass);
       if (value.isAnimated) emojiSpan.classList.add(this.animatedClass);
       emojiSpan.appendChild(image);
-    } else {
+    } else if (typeof value.unicode === 'string') {
       // unicode can be '1f1f5-1f1ea',see emoji-list.js.
       emojiSpan.innerText = String.fromCodePoint(...EmojiBlot.parseUnicode(value.unicode));
+    } else {
+      // unknown value shape (e.g. data written by a newer or older client);
+      // degrade to the raw shortcode text instead of throwing
+      emojiSpan.innerText = value.name ? `:${value.name}:` : '';
     }
 
     node.appendChild(emojiSpan);
