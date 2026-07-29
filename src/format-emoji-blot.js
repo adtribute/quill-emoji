@@ -35,6 +35,7 @@ class EmojiBlot extends Embed {
 
   static buildSpan(value, node) {
     node.setAttribute("data-name", value.name);
+    if (value.name) node.setAttribute("title", `:${value.name}:`);
     let emojiSpan = document.createElement("span");
     emojiSpan.classList.add(this.emojiClass);
     emojiSpan.classList.add(this.emojiPrefix + value.name);
