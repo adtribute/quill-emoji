@@ -22,6 +22,7 @@ class EmojiBlot extends Embed {
   static value(node) {
     const name = node.dataset.name;
     const imageUrl = node.dataset.imageUrl;
+    const unicode = node.dataset.unicode;
 
     if (imageUrl) {
       return {
@@ -29,6 +30,9 @@ class EmojiBlot extends Embed {
         imageUrl,
         isAnimated: node.dataset.isAnimated === "true",
       };
+    }
+    if (unicode) {
+      return { name, unicode };
     }
     return name;
   }
@@ -54,6 +58,7 @@ class EmojiBlot extends Embed {
       emojiSpan.appendChild(image);
     } else if (typeof value.unicode === "string") {
       // unicode can be '1f1f5-1f1ea',see emoji-list.js.
+      node.setAttribute("data-unicode", value.unicode);
       emojiSpan.innerText = String.fromCodePoint(
         ...EmojiBlot.parseUnicode(value.unicode),
       );
