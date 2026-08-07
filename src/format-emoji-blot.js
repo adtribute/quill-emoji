@@ -25,14 +25,26 @@ class EmojiBlot extends Embed {
   // empty blot, because throwing here escapes calls like setContents() and
   // takes down whatever renders the editor.
   static resolveEmoji(value) {
-    if (value && typeof value === 'object' && typeof value.unicode === 'string') {
+    if (EmojiBlot.isRenderable(value)) {
       return value;
     }
 
     const name = typeof value === 'string' ? value : value && value.name;
     const emoji = typeof name === 'string' ? emojiMap[name] : undefined;
 
-    return emoji && typeof emoji.unicode === 'string' ? emoji : undefined;
+    return EmojiBlot.isRenderable(emoji) ? emoji : undefined;
+  }
+
+  static isRenderable(emoji) {
+    if (!emoji || typeof emoji !== 'object' || typeof emoji.unicode !== 'string') {
+      return false;
+    }
+
+    // buildSpan hands these to String.fromCodePoint, which throws a RangeError
+    // on anything that is not a code point.
+    return EmojiBlot.parseUnicode(emoji.unicode).every(
+      codePoint => Number.isInteger(codePoint) && codePoint >= 0 && codePoint <= 0x10ffff
+    );
   }
 
   static buildSpan(value, node) {
