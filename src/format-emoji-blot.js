@@ -6,15 +6,10 @@ const Embed = Quill.import('blots/embed');
 class EmojiBlot extends Embed {
   static create(value) {
     let node = super.create();
-    if (typeof value === 'object') {
+    const emoji = EmojiBlot.resolveEmoji(value);
 
-      EmojiBlot.buildSpan(value, node);
-    } else if (typeof value === "string") {
-      const valueObj = emojiMap[value];
-
-      if (valueObj) {
-        EmojiBlot.buildSpan(valueObj, node);
-      }
+    if (emoji) {
+      EmojiBlot.buildSpan(emoji, node);
     }
 
     return node;
@@ -22,6 +17,22 @@ class EmojiBlot extends Embed {
 
   static value(node) {
     return node.dataset.name;
+  }
+
+  // A value arrives either as an emoji name or as an emoji object, and since
+  // value() reads it back as a name, a stored object may have lost its
+  // unicode; look those up by name. Values that resolve to no emoji build an
+  // empty blot, because throwing here escapes calls like setContents() and
+  // takes down whatever renders the editor.
+  static resolveEmoji(value) {
+    if (value && typeof value === 'object' && typeof value.unicode === 'string') {
+      return value;
+    }
+
+    const name = typeof value === 'string' ? value : value && value.name;
+    const emoji = typeof name === 'string' ? emojiMap[name] : undefined;
+
+    return emoji && typeof emoji.unicode === 'string' ? emoji : undefined;
   }
 
   static buildSpan(value, node) {
