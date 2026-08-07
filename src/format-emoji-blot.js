@@ -1,70 +1,93 @@
-import Quill from 'quill';
+import Quill from "quill";
 import emojiMap from "./emoji-map";
 
-const Embed = Quill.import('blots/embed');
+const Embed = Quill.import("blots/embed");
 
 class EmojiBlot extends Embed {
   static create(value) {
     let node = super.create();
-    const emoji = EmojiBlot.resolveEmoji(value);
+    if (value && typeof value === "object") {
+      EmojiBlot.buildSpan(value, node);
+    } else if (typeof value === "string") {
+      const valueObj = emojiMap[value];
 
-    if (emoji) {
-      EmojiBlot.buildSpan(emoji, node);
+      if (valueObj) {
+        EmojiBlot.buildSpan(valueObj, node);
+      }
     }
 
     return node;
   }
 
   static value(node) {
-    return node.dataset.name;
-  }
+    const name = node.dataset.name;
+    const imageUrl = node.dataset.imageUrl;
+    const unicode = node.dataset.unicode;
 
-  // A value arrives either as an emoji name or as an emoji object, and since
-  // value() reads it back as a name, a stored object may have lost its
-  // unicode; look those up by name. Values that resolve to no emoji build an
-  // empty blot, because throwing here escapes calls like setContents() and
-  // takes down whatever renders the editor.
-  static resolveEmoji(value) {
-    if (EmojiBlot.isRenderable(value)) {
-      return value;
+    if (imageUrl) {
+      return {
+        name,
+        imageUrl,
+        isAnimated: node.dataset.isAnimated === "true",
+      };
     }
-
-    const name = typeof value === 'string' ? value : value && value.name;
-    const emoji = typeof name === 'string' ? emojiMap[name] : undefined;
-
-    return EmojiBlot.isRenderable(emoji) ? emoji : undefined;
-  }
-
-  static isRenderable(emoji) {
-    if (!emoji || typeof emoji !== 'object' || typeof emoji.unicode !== 'string') {
-      return false;
+    if (unicode) {
+      return { name, unicode };
     }
-
-    // buildSpan hands these to String.fromCodePoint, which throws a RangeError
-    // on anything that is not a code point.
-    return EmojiBlot.parseUnicode(emoji.unicode).every(
-      codePoint => Number.isInteger(codePoint) && codePoint >= 0 && codePoint <= 0x10ffff
-    );
+    return name;
   }
 
   static buildSpan(value, node) {
-    node.setAttribute('data-name', value.name);
-    let emojiSpan = document.createElement('span');
+    node.setAttribute("data-name", value.name);
+    if (value.name) node.setAttribute("title", `:${value.name}:`);
+    let emojiSpan = document.createElement("span");
     emojiSpan.classList.add(this.emojiClass);
     emojiSpan.classList.add(this.emojiPrefix + value.name);
-    // unicode can be '1f1f5-1f1ea',see emoji-list.js.
-    emojiSpan.innerText = String.fromCodePoint(...EmojiBlot.parseUnicode(value.unicode));
+
+    if (value.imageUrl) {
+      node.setAttribute("data-image-url", value.imageUrl);
+      if (value.isAnimated)
+        node.setAttribute("data-is-animated", value.isAnimated);
+      let image = document.createElement("img");
+      image.src = value.imageUrl;
+      image.alt = `:${value.name}:`; // :emoji-name: rather than emoji-name
+      image.draggable = false;
+
+      emojiSpan.classList.add(this.imageClass);
+      if (value.isAnimated) emojiSpan.classList.add(this.animatedClass);
+      emojiSpan.appendChild(image);
+    } else if (typeof value.unicode === "string") {
+      // unicode can be '1f1f5-1f1ea',see emoji-list.js.
+      node.setAttribute("data-unicode", value.unicode);
+      try {
+        emojiSpan.innerText = String.fromCodePoint(
+          ...EmojiBlot.parseUnicode(value.unicode),
+        );
+      } catch (e) {
+        // a malformed unicode value would otherwise crash whatever renders
+        // the editor; degrade to the raw shortcode text
+        emojiSpan.innerText = value.name ? `:${value.name}:` : "";
+      }
+    } else {
+      // unknown value shape (e.g. data written by a newer or older client);
+      // degrade to the raw shortcode text instead of throwing
+      emojiSpan.innerText = value.name ? `:${value.name}:` : "";
+    }
+
     node.appendChild(emojiSpan);
   }
+
   static parseUnicode(string) {
-    return string.split('-').map(str => parseInt(str, 16));
+    return string.split("-").map((str) => parseInt(str, 16));
   }
 }
 
-EmojiBlot.blotName = 'emoji';
-EmojiBlot.className = 'ql-emojiblot';
-EmojiBlot.tagName = 'span';
-EmojiBlot.emojiClass = 'ap';
-EmojiBlot.emojiPrefix = 'ap-';
+EmojiBlot.blotName = "emoji";
+EmojiBlot.className = "ql-emojiblot";
+EmojiBlot.tagName = "span";
+EmojiBlot.emojiClass = "ap";
+EmojiBlot.emojiPrefix = "ap-";
+EmojiBlot.imageClass = "qe-image";
+EmojiBlot.animatedClass = "qe-image-animated";
 
 export default EmojiBlot;
