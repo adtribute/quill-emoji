@@ -59,9 +59,15 @@ class EmojiBlot extends Embed {
     } else if (typeof value.unicode === "string") {
       // unicode can be '1f1f5-1f1ea',see emoji-list.js.
       node.setAttribute("data-unicode", value.unicode);
-      emojiSpan.innerText = String.fromCodePoint(
-        ...EmojiBlot.parseUnicode(value.unicode),
-      );
+      try {
+        emojiSpan.innerText = String.fromCodePoint(
+          ...EmojiBlot.parseUnicode(value.unicode),
+        );
+      } catch (e) {
+        // a malformed unicode value would otherwise crash whatever renders
+        // the editor; degrade to the raw shortcode text
+        emojiSpan.innerText = value.name ? `:${value.name}:` : "";
+      }
     } else {
       // unknown value shape (e.g. data written by a newer or older client);
       // degrade to the raw shortcode text instead of throwing
