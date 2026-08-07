@@ -6,15 +6,10 @@ const Embed = Quill.import('blots/embed');
 class EmojiBlot extends Embed {
   static create(value) {
     let node = super.create();
-    if (typeof value === 'object') {
+    const emoji = EmojiBlot.resolveEmoji(value);
 
-      EmojiBlot.buildSpan(value, node);
-    } else if (typeof value === "string") {
-      const valueObj = emojiMap[value];
-
-      if (valueObj) {
-        EmojiBlot.buildSpan(valueObj, node);
-      }
+    if (emoji) {
+      EmojiBlot.buildSpan(emoji, node);
     }
 
     return node;
@@ -22,6 +17,34 @@ class EmojiBlot extends Embed {
 
   static value(node) {
     return node.dataset.name;
+  }
+
+  // A value arrives either as an emoji name or as an emoji object, and since
+  // value() reads it back as a name, a stored object may have lost its
+  // unicode; look those up by name. Values that resolve to no emoji build an
+  // empty blot, because throwing here escapes calls like setContents() and
+  // takes down whatever renders the editor.
+  static resolveEmoji(value) {
+    if (EmojiBlot.isRenderable(value)) {
+      return value;
+    }
+
+    const name = typeof value === 'string' ? value : value && value.name;
+    const emoji = typeof name === 'string' ? emojiMap[name] : undefined;
+
+    return EmojiBlot.isRenderable(emoji) ? emoji : undefined;
+  }
+
+  static isRenderable(emoji) {
+    if (!emoji || typeof emoji !== 'object' || typeof emoji.unicode !== 'string') {
+      return false;
+    }
+
+    // buildSpan hands these to String.fromCodePoint, which throws a RangeError
+    // on anything that is not a code point.
+    return EmojiBlot.parseUnicode(emoji.unicode).every(
+      codePoint => Number.isInteger(codePoint) && codePoint >= 0 && codePoint <= 0x10ffff
+    );
   }
 
   static buildSpan(value, node) {
