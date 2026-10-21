@@ -10,7 +10,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      NODE_OPTIONS: --use-openssl-ca
     steps:
+      - name: Update system CA certificates
+        run: sudo apt-get update && sudo apt-get install -y ca-certificates
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
         with:
@@ -21,7 +25,11 @@ jobs:
   publish-npm:
     needs: build
     runs-on: ubuntu-latest
+    env:
+      NODE_OPTIONS: --use-openssl-ca
     steps:
+      - name: Update system CA certificates
+        run: sudo apt-get update && sudo apt-get install -y ca-certificates
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
         with:
@@ -35,7 +43,11 @@ jobs:
   publish-gpr:
     needs: build
     runs-on: ubuntu-latest
+    env:
+      NODE_OPTIONS: --use-openssl-ca
     steps:
+      - name: Update system CA certificates
+        run: sudo apt-get update && sudo apt-get install -y ca-certificates
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
         with:
