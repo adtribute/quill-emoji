@@ -3,6 +3,9 @@
 
 name: Node.js Package
 
+permissions:
+  contents: read
+
 on:
   release:
     types: [created]
@@ -42,6 +45,9 @@ jobs:
 
   publish-gpr:
     needs: build
+    permissions:
+      contents: read
+      packages: write
     runs-on: ubuntu-latest
     env:
       NODE_OPTIONS: --use-openssl-ca
