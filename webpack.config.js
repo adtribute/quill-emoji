@@ -1,17 +1,19 @@
 const path = require('path');
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 
 const config = {
   entry: './src/quill-emoji.js',
   output: {
     filename: 'quill-emoji.js',
     path: path.resolve(__dirname, 'dist'),
-    library: "QuillEmoji",
-    libraryTarget: "umd"
+    library: {
+      name: 'QuillEmoji',
+      type: 'umd'
+    }
   },
-  target: "web",
+  target: ['web', 'es5'],
   mode: "production",
   externals: {
     quill: {
@@ -25,17 +27,7 @@ const config = {
     rules: [
       {
         test: /\.scss$/,
-        use: [
-          MiniCssExtractPlugin.loader,
-          'css-loader',
-          {
-            loader: 'sass-loader',
-            options: {
-              sourceMap: true,
-              sourceMapContents: false
-            }
-          },
-        ],
+        use: [MiniCssExtractPlugin.loader, 'css-loader', 'sass-loader'],
       },
       {
         test: /\.js$/,
@@ -54,31 +46,20 @@ const config = {
   },
   optimization: {
     minimizer: [
-      new UglifyJsPlugin({
-        uglifyOptions: {
-          warnings: false,
-          compress: {
-            conditionals: true,
-            unused: true,
-            comparisons: true,
-            sequences: true,
-            dead_code: true,
-            evaluate: true,
-            join_vars: true,
-            if_return: true
-          },
-          output: {
+      new TerserPlugin({
+        extractComments: false,
+        terserOptions: {
+          format: {
             comments: false
           }
         }
       }),
-      new OptimizeCSSAssetsPlugin({})
+      new CssMinimizerPlugin()
     ]
   },
   plugins: [
     new MiniCssExtractPlugin({
-      filename: 'quill-emoji.css',
-      chunkFilename: '[id].css',
+      filename: 'quill-emoji.css'
     })
   ],
 };
